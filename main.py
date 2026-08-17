@@ -82,6 +82,14 @@ Examples:
         help="Polling interval between state checks in seconds (default: 1.0s).",
     )
 
+    # Gameplay & Interaction Options
+    gameplay_group = parser.add_argument_group("Gameplay Options")
+    gameplay_group.add_argument(
+        "--random",
+        action="store_true",
+        help="Tap solved cells in randomized order instead of sequential row-by-row.",
+    )
+
     # Device Options
     device_group = parser.add_argument_group("Device Options")
     device_group.add_argument(
@@ -122,6 +130,7 @@ def main() -> None:
             mode=args.mode,
             max_levels=args.max_levels,
             poll_interval=args.poll_interval,
+            random_order=args.random,
             save_screenshots=save_screenshots,
             screenshot_path=screenshot_path,
         )
@@ -150,6 +159,7 @@ def main() -> None:
             device=device,
             apply_taps=args.apply,
             offline=is_offline,
+            random_order=args.random,
             save_screenshot=save_screenshots,
         )
     except Exception as e:

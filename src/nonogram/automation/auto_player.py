@@ -17,6 +17,7 @@ class AutoPlayerConfig:
     mode: str = "normal"
     max_levels: int | None = None  # None = run indefinitely until stopped
     poll_interval: float = 1.0
+    random_order: bool = False
     save_screenshots: bool = False
     screenshot_path: Path = Path("nonogram-screen.png")
     stop_on_error: bool = False
@@ -36,7 +37,7 @@ class AutoPlayer:
         self.mode_handler = (
             self.config.game_mode_handler or get_game_mode(self.config.mode)
         )
-        self.context = ModeContext()
+        self.context = ModeContext(random_order=self.config.random_order)
 
     def run_loop(
         self,

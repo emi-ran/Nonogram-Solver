@@ -152,6 +152,30 @@ class TestAutomationStateMachine(unittest.TestCase):
         adv_mode = get_game_mode("adventure")
         self.assertIsInstance(adv_mode, EventGameMode)
 
+    def test_random_order_tap_generation(self):
+        from unittest.mock import MagicMock
+        from src.nonogram.solver.models import Layout
+        from src.nonogram.device.adb import ADBController
+
+        device = ADBController(serial="fake-device")
+        device.run_cmd = MagicMock()
+
+        solution = [
+            [True, False, True],
+            [False, True, False],
+            [True, True, True],
+        ]
+        layout = Layout(width=300, height=300, first_x=100, first_y=100, step_x=50, step_y=50)
+
+        # Call with random_order=True
+        device.apply_solution(solution, layout, random_order=True)
+
+        self.assertTrue(device.run_cmd.called)
+        call_args = device.run_cmd.call_args
+        payload = call_args.kwargs.get("input_bytes", b"").decode()
+        tap_lines = [line for line in payload.strip().splitlines() if line.startswith("input tap")]
+        self.assertEqual(len(tap_lines), 6)  # 6 True values in solution
+
 
 if __name__ == "__main__":
     unittest.main()

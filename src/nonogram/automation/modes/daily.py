@@ -32,7 +32,7 @@ class DailyChallengeMode(BaseGameMode):
                 return False
 
             print(f"[DailyMode] Solution found ({result.filled_count} filled cells). Tapping...")
-            device.apply_solution(result.solution, result.puzzle.layout)
+            device.apply_solution(result.solution, result.puzzle.layout, random_order=context.random_order)
             context.last_solved_puzzle = result
             context.levels_completed += 1
             context.consecutive_unknowns = 0

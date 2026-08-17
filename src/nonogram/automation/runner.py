@@ -44,6 +44,7 @@ def run_pipeline(
     device: ADBController | None = None,
     apply_taps: bool = False,
     offline: bool = False,
+    random_order: bool = False,
     save_screenshot: bool = False,
     auto_save_error: bool = True,
 ) -> SolveResult:
@@ -94,6 +95,6 @@ def run_pipeline(
         if device is None:
             device = ADBController()
         if result.puzzle.layout and result.solution:
-            device.apply_solution(result.solution, result.puzzle.layout)
+            device.apply_solution(result.solution, result.puzzle.layout, random_order=random_order)
 
     return result

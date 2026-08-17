@@ -133,14 +133,25 @@ class ADBController:
         """Send a single tap at (x, y)."""
         self.run_cmd("shell", "input", "tap", str(x), str(y))
 
-    def apply_solution(self, solution: SolutionMatrix, layout: Layout) -> None:
+    def apply_solution(
+        self,
+        solution: SolutionMatrix,
+        layout: Layout,
+        random_order: bool = False,
+    ) -> None:
         """Tap all filled cells in a single interactive ADB shell session for maximum speed."""
-        commands: list[str] = []
+        cells: list[tuple[int, int]] = []
         for row_idx, line in enumerate(solution):
             for col_idx, value in enumerate(line):
                 if value:
                     x, y = layout.cell_center(row_idx, col_idx)
-                    commands.append(f"input tap {x} {y}")
+                    cells.append((x, y))
+
+        if random_order:
+            import random
+            random.shuffle(cells)
+
+        commands = [f"input tap {x} {y}" for x, y in cells]
         if commands:
             payload = ("\n".join(commands) + "\n").encode()
             self.run_cmd("shell", input_bytes=payload)

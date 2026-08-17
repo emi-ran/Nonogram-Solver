@@ -70,6 +70,11 @@ python main.py --auto --mode lilac_roses
 # 4. Other Events (Rise & Dice, Adventure)
 python main.py --auto --mode event
 python main.py --auto --mode adventure
+
+# 🎲 Random Tapping (Hücrelere rastgele sırada basma):
+python main.py --auto --mode normal --random
+python main.py --auto --mode lilac --random
+python main.py --apply --random
 ```
 
 #### 🎯 Single Level (Solve Current Board Once)

@@ -49,14 +49,17 @@ class TestNonogramVision(unittest.TestCase):
             self.assertEqual(result.puzzle.columns, 5)
             self.assertEqual(result.filled_count, 14)
 
-    def test_error2_sample(self):
-        sample_path = SAMPLES_DIR / "error2.png"
-        if sample_path.exists():
-            result = solve_from_image(sample_path)
-            self.assertTrue(result.is_solved)
-            self.assertEqual(result.puzzle.rows, 5)
-            self.assertEqual(result.puzzle.columns, 5)
-            self.assertEqual(result.filled_count, 19)
+    def test_extreme_sample(self):
+        sample_path = SAMPLES_DIR / "extreme.png"
+        if not sample_path.exists():
+            sample_path = Path("extreme.png")
+        self.assertTrue(sample_path.exists(), f"Missing sample file: {sample_path}")
+        result = solve_from_image(sample_path)
+
+        self.assertTrue(result.is_solved)
+        self.assertEqual(result.puzzle.rows, 20)
+        self.assertEqual(result.puzzle.columns, 20)
+        self.assertEqual(result.filled_count, 201)
 
 
 if __name__ == "__main__":

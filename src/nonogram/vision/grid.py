@@ -16,7 +16,7 @@ def _runs(values: np.ndarray, threshold: int) -> list[int]:
     if not len(positions):
         return []
     groups = np.split(positions, np.where(np.diff(positions) > 1)[0] + 1)
-    return [int(round(float(group.mean()))) for group in groups if len(group) >= 2]
+    return [int(round(float(group.mean()))) for group in groups if len(group) >= 1]
 
 
 def extract_regular_grid(

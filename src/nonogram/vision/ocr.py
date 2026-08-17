@@ -53,14 +53,15 @@ def read_card_clues(
 
     for index in range(count):
         if horizontal:
-            top = round(layout.first_y - layout.step_y / 2 + index * layout.step_y + 8)
-            bottom = round(layout.first_y + layout.step_y / 2 + index * layout.step_y - 8)
-            left, right = 10, vertical_lines[0] - 10
+            top = horizontal_lines[index] + 2
+            bottom = horizontal_lines[index + 1] - 2
+            left, right = 5, vertical_lines[0] - 5
             order_axis = 0
         else:
-            left = round(layout.first_x - layout.step_x / 2 + index * layout.step_x + 8)
-            right = round(layout.first_x + layout.step_x / 2 + index * layout.step_x - 8)
-            top, bottom = max(450, horizontal_lines[0] - 250), horizontal_lines[0] - 10
+            left = vertical_lines[index] + 2
+            right = vertical_lines[index + 1] - 2
+            top = max(450, horizontal_lines[0] - 240)
+            bottom = horizontal_lines[0] - 8
             order_axis = 1
 
         crop = gray[top:bottom, left:right]
@@ -69,8 +70,8 @@ def read_card_clues(
         glyphs: list[tuple[int, int, int, int]] = []
         for x, y, width, height, area in stats[1:]:
             if (
-                area >= config.GLYPH_MIN_AREA
-                and height >= config.GLYPH_MIN_HEIGHT
+                area >= 20
+                and height >= 10
                 and width >= config.GLYPH_MIN_WIDTH
             ):
                 glyphs.append((int(x + left), int(y + top), int(width), int(height)))
@@ -81,6 +82,7 @@ def read_card_clues(
                 (box[0], box[0] + box[2], match_digit(image, box)[0]) for box in glyphs
             ]
             lines: list[list[tuple[int, int, int | None]]] = [digits]
+            gap_limit = layout.step_x * 0.12
         else:
             # Column clues stack vertically. Components sharing a y-line form one token.
             raw_lines: list[list[tuple[int, int, int, int | None]]] = []
@@ -90,7 +92,7 @@ def read_card_clues(
                     (
                         line
                         for line in raw_lines
-                        if abs(center_y - line[0][2]) <= box[3] * 0.45
+                        if abs(center_y - line[0][2]) <= max(8.0, box[3] * 0.50)
                     ),
                     None,
                 )
@@ -108,9 +110,9 @@ def read_card_clues(
                 [(entry[0], entry[1], entry[3]) for entry in sorted(line)]
                 for line in sorted(raw_lines, key=lambda line: line[0][2])
             ]
+            gap_limit = max(15.0, layout.step_x * 0.35)
 
         values: list[int] = []
-        gap_limit = layout.step_x * 0.16
         allow_two_digit = count >= 10
         for line in lines:
             position = 0

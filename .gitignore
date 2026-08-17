@@ -70,5 +70,7 @@ venv.bak/
 Thumbs.db
 desktop.ini
 
-# Output / Temporary files
+# Output / Temporary screenshots
 *.log
+nonogram-screen*.png
+screenshot_temp.png

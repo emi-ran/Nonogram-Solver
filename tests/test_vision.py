@@ -39,7 +39,9 @@ class TestNonogramVision(unittest.TestCase):
         self.assertEqual(result.filled_count, 126)
 
     def test_error_sample(self):
-        sample_path = Path("error.png")
+        sample_path = SAMPLES_DIR / "error.png"
+        if not sample_path.exists():
+            sample_path = Path("error.png")
         if sample_path.exists():
             result = solve_from_image(sample_path)
             self.assertTrue(result.is_solved)

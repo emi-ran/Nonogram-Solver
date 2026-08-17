@@ -1,13 +1,13 @@
-# Nonogram Solver & Auto-Player
+# Nonogram Solver & Autonomous Auto-Player
 
-Dynamic Android Nonogram solver and auto-player. Captures screenshots via ADB, reads the board grid & clues with template-based OCR, solves constraint matrices with an MRV backtracking solver, and automates level completion.
+Dynamic Android Nonogram solver and full autonomous auto-player. Captures screenshots via ADB directly in RAM (zero disk I/O), reads board clues & UI state via OpenCV, solves constraint matrices with an MRV backtracking solver, and automates continuous level progression.
 
 ## Project Structure
 
 ```text
 Nonogram-Solver/
 ├── assets/
-│   └── samples/             # Sample screenshots for offline testing
+│   └── samples/             # Sample screenshots for offline testing & state verification
 ├── src/
 │   └── nonogram/
 │       ├── config.py        # Central configuration & tolerances
@@ -15,17 +15,24 @@ Nonogram-Solver/
 │       │   ├── engine.py    # Pattern generator & constraint solver
 │       │   └── models.py    # Board, Clue, and Layout data models
 │       ├── vision/          # Vision and OCR processing
-│       │   ├── grid.py      # Grid detection and line alignment
+│       │   ├── grid.py      # Regular equidistant grid extraction
 │       │   ├── ocr.py       # Number recognition & card clue parsing
 │       │   └── templates.py # Pre-computed binary digit templates
 │       ├── device/          # Android ADB bridge
-│       │   └── adb.py       # Screencap and high-speed batch tapping
-│       └── automation/      # Game loop & auto-progression
+│       │   └── adb.py       # Screencap & in-memory decoding, high-speed batch taps
+│       └── automation/      # Autonomous state machine & game modes
 │           ├── runner.py    # Pipeline runner (Capture -> OCR -> Solve -> Tap)
-│           └── auto_player.py # Automated level progression loop
+│           ├── states.py    # Screen state detector (Playing, Completed, Dialog)
+│           ├── auto_player.py # Autonomous game loop coordinator
+│           └── modes/       # Strategy-pattern extensible game modes
+│               ├── base.py    # Base game mode interface
+│               ├── normal.py  # Normal / Classic mode (Next Level auto-advancement)
+│               ├── daily.py   # Daily Challenge mode
+│               └── events.py  # Event modes (Rise & Dice, Adventure, Lilac Roses)
 ├── tests/                   # Automated unit & integration tests
 │   ├── test_solver.py       # Core solver unit tests
-│   └── test_vision.py       # Vision & OCR tests against sample boards
+│   ├── test_vision.py       # Vision & OCR tests against sample boards
+│   └── test_automation.py   # State detector & game mode tests
 ├── main.py                  # Primary CLI entry point
 ├── nonogram_solver.py       # Backward-compatible wrapper
 ├── requirements.txt
@@ -44,26 +51,43 @@ Nonogram-Solver/
 
 ### 2. Usage
 
-#### Run on Live Device (Single Board)
-```powershell
-# Solve and output clues/solution (dry-run, no taps):
-python main.py
+#### 🤖 Fully Autonomous Mode (Continuous Play)
+Runs in a continuous loop: detects active board -> solves & taps -> detects "Level Completed" -> taps "Next Level" -> dismisses event/reward dialogs -> repeats.
 
+```powershell
+# Auto-play Normal levels continuously (e.g. 50 levels):
+python main.py --auto
+
+# Target specific number of levels:
+python main.py --auto --max-levels 20
+
+# Run in specific game mode:
+python main.py --auto --mode normal
+python main.py --auto --mode daily
+python main.py --auto --mode event
+```
+
+#### 🎯 Single Level (Solve Current Board Once)
+```powershell
 # Solve and automatically tap solution on screen:
 python main.py --apply
+
+# Solve only (dry-run, prints detected clues and solution, no taps):
+python main.py
 ```
 
-#### Run in Auto-Player Mode (Multiple Levels)
+#### 📸 Capture Screenshot Only (No Solving)
+Takes a screenshot from the connected device and exits immediately:
 ```powershell
-# Automatically solve and advance consecutive levels:
-python main.py --auto --max-levels 20
+python main.py --screenshot my_board.png
+# veya
+python main.py --capture
 ```
 
-#### Offline Testing (No Device Needed)
+#### 🧪 Offline Testing (Local Image Analysis)
 ```powershell
-python main.py --offline --screenshot assets/samples/Hard.png
+python main.py --offline --file assets/samples/Hard.png
 python main.py --offline --screenshot assets/samples/Medium.png
-python main.py --offline --screenshot assets/samples/Basic.png
 ```
 
 ### 3. Running Tests

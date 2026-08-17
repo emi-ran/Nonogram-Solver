@@ -21,20 +21,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="Tap solution cells on the connected Android device.",
     )
     parser.add_argument(
-        "--offline",
-        action="store_true",
-        help="Analyze an existing local screenshot without ADB.",
+        "--screenshot",
+        "--capture",
+        dest="screenshot",
+        type=Path,
+        nargs="?",
+        const=DEFAULT_SCREENSHOT_PATH,
+        default=None,
+        help="Capture and save screenshot only (e.g. --screenshot error.png), without solving.",
     )
     parser.add_argument(
-        "--screenshot",
+        "--file",
+        "--image",
+        dest="offline_image",
         type=Path,
         default=None,
-        help="Path to screenshot file (e.g. error.png, board.png).",
+        help="Path to existing local screenshot for offline solving.",
+    )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Analyze an existing local screenshot without ADB (requires --file or --screenshot).",
     )
     parser.add_argument(
         "--save-screenshot",
         action="store_true",
-        help="Save captured screenshot to disk (default file: nonogram-screen.png).",
+        help="Save captured screenshot to disk during solve mode.",
     )
     parser.add_argument(
         "--device",
@@ -45,13 +57,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--auto",
         action="store_true",
-        help="Run in auto-player mode (solves levels consecutively).",
+        help="Run in fully autonomous auto-player mode.",
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="normal",
+        choices=["normal", "daily", "event", "adventure", "rise_dice"],
+        help="Game mode for auto-player (default: normal).",
     )
     parser.add_argument(
         "--max-levels",
         type=int,
-        default=10,
-        help="Maximum levels to play in auto mode (default: 10).",
+        default=50,
+        help="Maximum levels to play in auto mode (default: 50).",
+    )
+    parser.add_argument(
+        "--poll-interval",
+        type=float,
+        default=1.0,
+        help="Polling interval between state checks in seconds (default: 1.0s).",
     )
     return parser
 
@@ -60,37 +85,54 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
+    # 1. Capture-only mode: Take screenshot and exit immediately
+    if args.screenshot is not None and not args.offline and not args.auto and not args.apply:
+        device = ADBController(serial=args.device)
+        target_path = Path(args.screenshot)
+        if not target_path.suffix:
+            target_path = target_path.with_suffix(".png")
+        try:
+            device.capture_screenshot(target_path)
+            print(f"[Capture] Screenshot successfully captured and saved to: {target_path}")
+        except Exception as e:
+            print(f"Error capturing screenshot: {e}", file=sys.stderr)
+            sys.exit(1)
+        return
+
+    # 2. Offline solving mode
+    offline_path = args.offline_image or (args.screenshot if args.offline else None)
     if args.offline:
         if args.apply:
             print("Error: --apply cannot be used together with --offline.", file=sys.stderr)
             sys.exit(1)
-        if args.screenshot is None:
-            print("Error: --offline requires specifying a screenshot via --screenshot <path.png>", file=sys.stderr)
+        if offline_path is None:
+            print("Error: --offline requires specifying an image via --file <path.png> or --screenshot <path.png>", file=sys.stderr)
             sys.exit(1)
 
+    # 3. Autonomous gameplay mode
     if args.auto:
         device = ADBController(serial=args.device)
         config = AutoPlayerConfig(
+            mode=args.mode,
             max_levels=args.max_levels,
-            save_screenshots=args.save_screenshot or (args.screenshot is not None),
+            poll_interval=args.poll_interval,
+            save_screenshots=args.save_screenshot,
             screenshot_path=args.screenshot or DEFAULT_SCREENSHOT_PATH,
         )
         player = AutoPlayer(config=config, device=device)
-        print(f"Starting Auto-Player mode (target: {args.max_levels} levels)...")
 
-        def on_solved(level: int, res):
-            print(f"-> Solved Level #{level}: {res.puzzle.rows}x{res.puzzle.columns} grid ({res.filled_count} filled cells)")
+        def on_progress(completed: int, msg: str):
+            pass
 
-        completed = player.run_loop(on_level_solved=on_solved)
-        print(f"Auto-Player completed {completed} levels.")
+        completed = player.run_loop(on_progress=on_progress)
         return
 
-    # Single solve mode
+    # 4. Single solve mode (online or offline)
     device = ADBController(serial=args.device) if not args.offline else None
 
     try:
         result = run_pipeline(
-            screenshot_path=args.screenshot,
+            screenshot_path=offline_path if args.offline else args.screenshot,
             device=device,
             apply_taps=args.apply,
             offline=args.offline,

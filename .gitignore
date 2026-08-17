@@ -70,7 +70,16 @@ venv.bak/
 Thumbs.db
 desktop.ini
 
-# Output / Temporary screenshots
+# Output / Temporary files
 *.log
-nonogram-screen*.png
-screenshot_temp.png
+
+# Root-level images (screenshots, dumps)
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+
+# Ensure assets directory and samples are kept
+!assets/
+!assets/**
+

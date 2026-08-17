@@ -19,8 +19,8 @@ Android cihazlarda çalışan popüler **Nonogram.com** oyunları için gelişti
 
 ## 🌟 Öne Çıkan Özellikler
 
-- 👁️ **Dinamik Izgara ve İpucu Algılama:** Ekran görüntüsündeki Nonogram ızgara boyutunu (5x5, 10x10, 15x15 vb.) ve satır/sütun sayı ipuçlarını OpenCV şablon eşleme ve kontur analiziyle sıfır hata ile okur.
-- ⚡ **Işık Hızında Çözüm Motoru:** Dinamik programlama (memoized line-solver) ve kısıt yayılımı ile 15x15 zor tahtaları bile **< 10 milisaniye** içinde çözer.
+- 👁️ **Dinamik Izgara ve İpucu Algılama:** Ekran görüntüsündeki Nonogram ızgara boyutunu (5x5, 10x10, 15x15, 20x20 vb.) ve satır/sütun sayı ipuçlarını OpenCV şablon eşleme ve kontur analiziyle sıfır hata ile okur.
+- ⚡ **Işık Hızında Çözüm Motoru:** Dinamik programlama (memoized line-solver) ve kısıt yayılımı ile 20x20 Expert tahtaları bile **< 15 milisaniye** içinde çözer.
 - 📱 **Sıfır Gecikmeli Toplu Tıklama (Batch ADB):** Tüm dokunma komutlarını tek bir interaktif ADB shell oturumunda göndererek gecikmeyi sıfıra indirir.
 - 🤖 **Tam Otonom Oyun Döngüsü:**
   - **Normal Mod:** Bölümleri ardı ardına çözer, sonraki bölüme geçer, menüleri yönetir.

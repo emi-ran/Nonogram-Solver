@@ -28,7 +28,7 @@ Nonogram-Solver/
 │       │   ├── engine.py    # Pattern generator & constraint solver
 │       │   └── models.py    # Board, Clue, and Layout data models
 │       ├── vision/          # Vision and OCR processing
-│       │   ├── grid.py      # Regular equidistant grid extraction
+│       │   ├── grid.py      # Regular equidistant grid extraction (5x5 to 20x20)
 │       │   ├── ocr.py       # Number recognition & card clue parsing
 │       │   └── templates.py # Pre-computed binary digit templates
 │       ├── device/          # Android ADB bridge
@@ -36,18 +36,20 @@ Nonogram-Solver/
 │       └── automation/      # Autonomous state machine & game modes
 │           ├── runner.py    # Pipeline runner (Capture -> OCR -> Solve -> Tap)
 │           ├── states.py    # Screen state detector (Playing, Completed, Dialog)
+│           ├── patterns.py  # Interactive tapping patterns (Ping-Pong, Center-Out, etc.)
 │           ├── auto_player.py # Autonomous game loop coordinator
 │           └── modes/       # Strategy-pattern extensible game modes
 │               ├── base.py    # Base game mode interface
 │               ├── normal.py  # Normal / Classic mode (Next Level auto-advancement)
 │               ├── daily.py   # Daily Challenge mode
 │               └── events.py  # Event modes (Rise & Dice, Adventure, Lilac Roses)
-├── tests/                   # Automated unit & integration tests
+├── tests/                   # Automated unit & integration tests (23 tests)
 │   ├── test_solver.py       # Core solver unit tests
-│   ├── test_vision.py       # Vision & OCR tests against sample boards
+│   ├── test_vision.py       # Vision & OCR tests against sample boards (5x5 to 20x20)
+│   ├── test_patterns.py     # Tapping pattern permutation tests
 │   └── test_automation.py   # State detector & game mode tests
+├── DEVELOPMENT.md           # Deep-dive architecture & developer guide
 ├── main.py                  # Primary CLI entry point
-├── nonogram_solver.py       # Backward-compatible wrapper
 ├── requirements.txt
 └── README.md
 ```
@@ -77,27 +79,27 @@ python main.py --auto --mode daily --max-levels 5
 
 # 3. Lilac Roses Event Mode
 python main.py --auto --mode lilac
-# veya
+# or
 python main.py --auto --mode lilac_roses
 
 # 4. Other Events (Rise & Dice, Adventure)
 python main.py --auto --mode event
 python main.py --auto --mode adventure
 
-# 🎲 Tıklama & Karıştırma Modları (--random [MODE]):
-# 1. ping_pong: Bir baştan bir sondan ortaya doğru buluşan
+# 🎲 Tapping & Shuffle Modes (--random [MODE]):
+# 1. ping_pong: Alternating from top-left and bottom-right, converging in the center
 python main.py --auto --mode lilac --random ping_pong
 
-# 2. center_out: Merkezden dışa doğru halka/daire şeklinde yayılan
+# 2. center_out: Starting from the center and expanding outward in rings
 python main.py --auto --mode lilac --random center_out
 
-# 3. reverse: Tersten (sağ alttan sol üste doğru)
+# 3. reverse: Bottom-right to top-left inverted tapping
 python main.py --auto --mode lilac --random reverse
 
-# 4. snake: Zigzag / yılan şeklinde (satır satır yön değiştirerek)
+# 4. snake: Zigzag row-by-row alternating direction
 python main.py --auto --mode lilac --random snake
 
-# 5. Tamamen rastgele karıştırılmış:
+# 5. Pure Random: Uniformly shuffled permutation
 python main.py --auto --mode lilac --random
 ```
 
@@ -105,6 +107,7 @@ python main.py --auto --mode lilac --random
 ```powershell
 # Solve and automatically tap solution on screen:
 python main.py --apply
+python main.py --apply --random center_out
 
 # Solve only (dry-run, prints detected clues and solution, no taps):
 python main.py
@@ -122,11 +125,12 @@ python main.py --screenshot board.png
 
 #### 🧪 Offline Testing (Local Image Analysis)
 ```powershell
+python main.py --offline assets/samples/extreme.png
 python main.py --offline assets/samples/Hard.png
 python main.py --offline assets/samples/Medium.png
 ```
 
 ### 3. Running Tests
 ```powershell
-python -m unittest discover tests
+python -m unittest discover -s tests
 ```

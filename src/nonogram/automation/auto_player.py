@@ -15,7 +15,7 @@ from src.nonogram.device.adb import ADBController
 @dataclass
 class AutoPlayerConfig:
     mode: str = "normal"
-    max_levels: int = 100
+    max_levels: int | None = None  # None = run indefinitely until stopped
     poll_interval: float = 1.0
     save_screenshots: bool = False
     screenshot_path: Path = Path("nonogram-screen.png")
@@ -43,7 +43,8 @@ class AutoPlayer:
         on_progress: Callable[[int, str], None] | None = None,
     ) -> int:
         """Run the main autonomous state machine loop."""
-        print(f"[AutoPlayer] Started | Mode: '{self.mode_handler.name}' | Target: {self.config.max_levels} levels")
+        target_str = f"{self.config.max_levels} levels" if self.config.max_levels is not None else "Until stopped (Ctrl+C)"
+        print(f"[AutoPlayer] Started | Mode: '{self.mode_handler.name}' | Target: {target_str}")
         consecutive_errors = 0
 
         # Ensure device is awake and Nonogram app is launched in foreground
@@ -53,7 +54,7 @@ class AutoPlayer:
         except Exception as e:
             print(f"[AutoPlayer] Warning on initial app launch: {e}")
 
-        while self.context.levels_completed < self.config.max_levels:
+        while self.config.max_levels is None or self.context.levels_completed < self.config.max_levels:
             try:
                 # 1. Capture screen directly in memory
                 image = self.device.capture_image()
@@ -76,6 +77,9 @@ class AutoPlayer:
                     if on_progress:
                         on_progress(self.context.levels_completed, f"State: {detection.state.name}")
 
+                if self.context.is_finished:
+                    break
+
                 time.sleep(self.config.poll_interval)
 
             except KeyboardInterrupt:
@@ -89,5 +93,6 @@ class AutoPlayer:
                     break
                 time.sleep(1.5)
 
-        print(f"\n[AutoPlayer] Session ended. Completed {self.context.levels_completed}/{self.config.max_levels} levels.")
+        target_display = str(self.config.max_levels) if self.config.max_levels is not None else "infinite"
+        print(f"\n[AutoPlayer] Session ended. Completed {self.context.levels_completed}/{target_display} levels.")
         return self.context.levels_completed

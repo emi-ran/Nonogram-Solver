@@ -55,16 +55,21 @@ Nonogram-Solver/
 Runs in a continuous loop: detects active board -> solves & taps -> detects "Level Completed" -> taps "Next Level" -> dismisses event/reward dialogs -> repeats.
 
 ```powershell
-# Auto-play Normal levels continuously (e.g. 50 levels):
-python main.py --auto
-
-# Target specific number of levels:
-python main.py --auto --max-levels 20
-
-# Run in specific game mode:
+# 1. Normal (Classic) Mode - Continuous Autonomous Play
 python main.py --auto --mode normal
+
+# 2. Daily Challenges Mode
 python main.py --auto --mode daily
+python main.py --auto --mode daily --max-levels 5
+
+# 3. Lilac Roses Event Mode
+python main.py --auto --mode lilac
+# veya
+python main.py --auto --mode lilac_roses
+
+# 4. Other Events (Rise & Dice, Adventure)
 python main.py --auto --mode event
+python main.py --auto --mode adventure
 ```
 
 #### 🎯 Single Level (Solve Current Board Once)
@@ -79,15 +84,17 @@ python main.py
 #### 📸 Capture Screenshot Only (No Solving)
 Takes a screenshot from the connected device and exits immediately:
 ```powershell
-python main.py --screenshot my_board.png
-# veya
-python main.py --capture
+# Saves to default nonogram-screen.png:
+python main.py --screenshot
+
+# Saves to custom file name:
+python main.py --screenshot board.png
 ```
 
 #### 🧪 Offline Testing (Local Image Analysis)
 ```powershell
-python main.py --offline --file assets/samples/Hard.png
-python main.py --offline --screenshot assets/samples/Medium.png
+python main.py --offline assets/samples/Hard.png
+python main.py --offline assets/samples/Medium.png
 ```
 
 ### 3. Running Tests

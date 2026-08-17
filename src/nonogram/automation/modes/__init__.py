@@ -13,6 +13,8 @@ AVAILABLE_MODES: dict[str, Type[BaseGameMode]] = {
     "event": EventGameMode,
     "adventure": EventGameMode,
     "rise_dice": EventGameMode,
+    "lilac": EventGameMode,
+    "lilac_roses": EventGameMode,
 }
 
 

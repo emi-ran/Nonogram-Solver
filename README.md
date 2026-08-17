@@ -1,6 +1,19 @@
-# Nonogram Solver & Autonomous Auto-Player
+# 🧩 Nonogram Solver & Autonomous Player
 
-Dynamic Android Nonogram solver and full autonomous auto-player. Captures screenshots via ADB directly in RAM (zero disk I/O), reads board clues & UI state via OpenCV, solves constraint matrices with an MRV backtracking solver, and automates continuous level progression.
+<p align="center">
+  <a href="README.md"><b>English</b></a> •
+  <a href="README.tr.md">Türkçe</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.9%2B-blue.svg" alt="Python 3.9+">
+  <img src="https://img.shields.io/badge/OpenCV-Computer%20Vision-green.svg" alt="OpenCV">
+  <img src="https://img.shields.io/badge/ADB-Android%20Automation-orange.svg" alt="ADB">
+  <img src="https://img.shields.io/badge/License-MIT-purple.svg" alt="MIT License">
+  <img src="https://img.shields.io/badge/Tests-23%20Passing-brightgreen.svg" alt="Tests">
+</p>
+
+A fast, dynamic, end-to-end **Android Nonogram Solver and Autonomous Player** powered by Computer Vision (OpenCV), Constraint Propagation, and ADB automation. Supports continuous infinite play, Daily Challenges, Special Events (Lilac Roses), and customizable interactive tapping patterns.
 
 ## Project Structure
 

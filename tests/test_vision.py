@@ -38,6 +38,24 @@ class TestNonogramVision(unittest.TestCase):
         self.assertEqual(result.puzzle.columns, 15)
         self.assertEqual(result.filled_count, 126)
 
+    def test_error_sample(self):
+        sample_path = Path("error.png")
+        if sample_path.exists():
+            result = solve_from_image(sample_path)
+            self.assertTrue(result.is_solved)
+            self.assertEqual(result.puzzle.rows, 5)
+            self.assertEqual(result.puzzle.columns, 5)
+            self.assertEqual(result.filled_count, 14)
+
+    def test_error2_sample(self):
+        sample_path = SAMPLES_DIR / "error2.png"
+        if sample_path.exists():
+            result = solve_from_image(sample_path)
+            self.assertTrue(result.is_solved)
+            self.assertEqual(result.puzzle.rows, 5)
+            self.assertEqual(result.puzzle.columns, 5)
+            self.assertEqual(result.filled_count, 19)
+
 
 if __name__ == "__main__":
     unittest.main()

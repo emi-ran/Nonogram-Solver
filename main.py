@@ -28,13 +28,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--screenshot",
         type=Path,
-        default=DEFAULT_SCREENSHOT_PATH,
-        help=f"Path to screenshot file (default: {DEFAULT_SCREENSHOT_PATH}).",
+        default=None,
+        help="Path to screenshot file (e.g. error.png, board.png).",
     )
     parser.add_argument(
         "--save-screenshot",
         action="store_true",
-        help="Save captured screenshot to disk. If not set, processing is done entirely in RAM.",
+        help="Save captured screenshot to disk (default file: nonogram-screen.png).",
     )
     parser.add_argument(
         "--device",
@@ -60,16 +60,20 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    if args.offline and args.apply:
-        print("Error: --apply cannot be used together with --offline.", file=sys.stderr)
-        sys.exit(1)
+    if args.offline:
+        if args.apply:
+            print("Error: --apply cannot be used together with --offline.", file=sys.stderr)
+            sys.exit(1)
+        if args.screenshot is None:
+            print("Error: --offline requires specifying a screenshot via --screenshot <path.png>", file=sys.stderr)
+            sys.exit(1)
 
     if args.auto:
         device = ADBController(serial=args.device)
         config = AutoPlayerConfig(
             max_levels=args.max_levels,
-            save_screenshots=args.save_screenshot,
-            screenshot_path=args.screenshot,
+            save_screenshots=args.save_screenshot or (args.screenshot is not None),
+            screenshot_path=args.screenshot or DEFAULT_SCREENSHOT_PATH,
         )
         player = AutoPlayer(config=config, device=device)
         print(f"Starting Auto-Player mode (target: {args.max_levels} levels)...")

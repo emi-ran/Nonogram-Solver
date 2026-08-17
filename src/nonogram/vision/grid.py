@@ -19,6 +19,47 @@ def _runs(values: np.ndarray, threshold: int) -> list[int]:
     return [int(round(float(group.mean()))) for group in groups if len(group) >= 2]
 
 
+def extract_regular_grid(
+    lines: list[int],
+    allowed_sizes: tuple[int, ...] = (5, 10, 15, 20),
+    line_cluster_gap: int = 30,
+) -> list[int] | None:
+    """Find a subset of candidate lines that forms a highly regular, equidistant Nonogram grid."""
+    if not lines:
+        return None
+
+    # Merge very close duplicate/fragment lines (< line_cluster_gap)
+    merged: list[list[int]] = []
+    for line in sorted(lines):
+        if merged and line - merged[-1][-1] <= line_cluster_gap:
+            merged[-1].append(line)
+        else:
+            merged.append([line])
+    distinct = [round(sum(group) / len(group)) for group in merged]
+
+    # Check largest grid sizes first (e.g. 20 -> 15 -> 10 -> 5) so sub-slices of larger grids are not misidentified
+    for n in sorted(allowed_sizes, reverse=True):
+        target_len = n + 1
+        if len(distinct) < target_len:
+            continue
+        best_for_n: list[int] | None = None
+        best_score = float("inf")
+        for start in range(len(distinct) - target_len + 1):
+            sub = distinct[start : start + target_len]
+            diffs = np.diff(sub)
+            std = float(np.std(diffs))
+            mean_step = float(np.mean(diffs))
+            expected_step = 1000.0 / n
+            if 0.65 * expected_step <= mean_step <= 1.45 * expected_step:
+                if std < best_score and std < 12.0:
+                    best_score = std
+                    best_for_n = sub
+        if best_for_n is not None:
+            return best_for_n
+
+    return None
+
+
 def find_line_centers(image: np.ndarray) -> tuple[list[int], list[int]]:
     """Detect vertical and horizontal grid lines on the Nonogram board."""
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -30,34 +71,19 @@ def find_line_centers(image: np.ndarray) -> tuple[list[int], list[int]]:
         dark[780 : min(height, 1840)].sum(axis=0), config.LINE_PROJECTION_THRESHOLD
     )
     horizontal_raw = _runs(
-        dark[:, 220 : min(width, 1270)].sum(axis=1), config.LINE_PROJECTION_THRESHOLD
+        dark[:, config.MIN_GRID_COORDINATE_X : min(width, 1270)].sum(axis=1),
+        config.LINE_PROJECTION_THRESHOLD,
     )
 
-    def merge_close(lines: list[int], maximum_gap: int) -> list[int]:
-        merged: list[list[int]] = []
-        for line in lines:
-            if merged and line - merged[-1][-1] <= maximum_gap:
-                merged[-1].append(line)
-            else:
-                merged.append([line])
-        return [round(sum(group) / len(group)) for group in merged]
+    vertical = extract_regular_grid(
+        [line for line in vertical_raw if config.MIN_GRID_COORDINATE_X <= line <= width - 15]
+    )
+    horizontal = extract_regular_grid(
+        [line for line in horizontal_raw if config.MIN_GRID_COORDINATE_Y <= line <= min(height, config.MAX_GRID_COORDINATE_Y)]
+    )
 
-    vertical = merge_close(
-        [
-            line
-            for line in vertical_raw
-            if config.MIN_GRID_COORDINATE_X <= line <= width - 15
-        ],
-        config.LINE_GAP_THRESHOLD,
-    )
-    horizontal = merge_close(
-        [
-            line
-            for line in horizontal_raw
-            if config.MIN_GRID_COORDINATE_Y <= line <= min(height, config.MAX_GRID_COORDINATE_Y)
-        ],
-        config.LINE_GAP_THRESHOLD,
-    )
+    if vertical is None or horizontal is None:
+        raise ValueError("Could not recognize a valid Nonogram grid on screen.")
 
     columns, rows = len(vertical) - 1, len(horizontal) - 1
     if rows not in config.ALLOWED_GRID_SIZES or rows != columns:

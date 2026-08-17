@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import subprocess
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
@@ -29,15 +28,40 @@ class Layout:
 
 Clue = tuple[int, ...]
 Pattern = tuple[int, ...]
-_ocr = RapidOCR()
+_ocr: RapidOCR | None = None
+_adb_serial: str | None = None
+
+PACKED_TEMPLATES = {
+    0: bytes.fromhex("07e01ff81ff83c3c781c700e700ef00fe007e007e007e007e007e007e007e007f00f700e700e781e3c3c1ff81ff807e0"),
+    1: bytes.fromhex("007f01ff0fff7fffff9ffe1ff01f801f001f001f001f001f001f001f001f001f001f001f001f001f001f001f001f001f"),
+    2: bytes.fromhex("0fe01ff83ffc783ef01ee00ee00f000f000f001e001c003c007800f001f003e00f801f003e007c00f800ffffffffffff"),
+    3: bytes.fromhex("0ff03ffc7ffc783ef00ee00e000f000e001e003c07f807f807fc001e000f00070007e007f00ff00f7c3e7ffc1ff807e0"),
+    4: bytes.fromhex("0038007800f800f801f803f803b8073807380e381c381c38383838387038fffeffffffff7ffe00380038003800380038"),
+    5: bytes.fromhex("7ffe7ffe7ffe7000f000f000e000e000e7f0fff8fffcfc3ef01fe00f000700070007e007f00ff81f7ffe3ffc1ff807e0"),
+    6: bytes.fromhex("07f80ffc1ffe3c1e780f70077000f000e3f0e7f8effcfe3ef80ff80ff007f007f0077007780f380f3e3e1ffc0ff807e0"),
+    7: bytes.fromhex("ffffffffffffffff001f001e003e003c00380078007000f000f001e003e003e007c007c0078007000f000f001e001c00"),
+    8: bytes.fromhex("0ff01ffc3ffe7c1e780f700f7007700f780e3c3e1ffc1ff83ffc7c1e700ff007e007e007f007f00f7c1f7ffe1ffc0ff0"),
+    9: bytes.fromhex("03001fe03ff07ff8f01cf01ee00ee00ee00ee00ee01e701f787e3ffe1fee0f8e000e000ef01ef01c7ff87ff01fe00380"),
+}
+TEMPLATES = {d: np.unpackbits(np.frombuffer(raw, dtype=np.uint8)).reshape(24, 16) for d, raw in PACKED_TEMPLATES.items()}
 
 
-def adb(*args: str, capture_output: bool = False) -> subprocess.CompletedProcess[bytes]:
-    output = subprocess.run(["adb", "devices"], check=True, capture_output=True).stdout.decode()
-    serials = [line.split()[0] for line in output.splitlines()[1:] if line.endswith("\tdevice")]
-    if len(serials) != 1:
-        raise RuntimeError(f"ADB needs one device; found: {', '.join(serials) or 'none'}")
-    return subprocess.run(["adb", "-s", serials[0], *args], check=True, capture_output=capture_output)
+def _get_ocr() -> RapidOCR:
+    global _ocr
+    if _ocr is None:
+        _ocr = RapidOCR()
+    return _ocr
+
+
+def adb(*args: str, capture_output: bool = False, input_bytes: bytes | None = None) -> subprocess.CompletedProcess[bytes]:
+    global _adb_serial
+    if _adb_serial is None:
+        output = subprocess.run(["adb", "devices"], check=True, capture_output=True).stdout.decode()
+        serials = [line.split()[0] for line in output.splitlines()[1:] if line.endswith("\tdevice")]
+        if len(serials) != 1:
+            raise RuntimeError(f"ADB needs one device; found: {', '.join(serials) or 'none'}")
+        _adb_serial = serials[0]
+    return subprocess.run(["adb", "-s", _adb_serial, *args], check=True, capture_output=capture_output, input=input_bytes)
 
 
 def screen_size() -> tuple[int, int]:
@@ -104,34 +128,29 @@ def read_layout(image_path: Path) -> tuple[Layout, int, int]:
     return layout, len(horizontal) - 1, len(vertical) - 1
 
 
-def _read_digit(image: np.ndarray, box: tuple[int, int, int, int], maximum: int) -> int | None:
+def _match_digit(image: np.ndarray, box: tuple[int, int, int, int]) -> tuple[int | None, float]:
     x, y, width, height = box
-    best: tuple[float, int] | None = None
-    for padding in (10, 12, 14, 16, 18, 20):
-        crop = image[max(0, y - padding) : min(image.shape[0], y + height + padding), max(0, x - padding) : min(image.shape[1], x + width + padding)]
-        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-        enlarged = cv2.resize(gray, None, fx=5, fy=5, interpolation=cv2.INTER_CUBIC)
-        result, _ = _ocr(enlarged)
-        for _, text, confidence in cast(list[tuple[list[list[float]], str, float]], result or []):
-            if not text.isdecimal():
-                continue
-            # One connected glyph can be read together with its neighbour
-            # because padding overlaps. Keep rightmost digit; grouping below
-            # reconstructs 10, 11, 12, etc. from separate glyph positions.
-            if len(text) > 1:
-                text = text[-1]
-            value = int(text)
-            if not 0 <= value <= maximum:
-                continue
-            candidate = (float(confidence), value)
-            if best is None or candidate[0] > best[0] or (candidate[0] == best[0] and len(text) < len(str(best[1]))):
-                best = candidate
-        if best is not None and best[0] >= 0.99:
-            break
-    return best[1] if best is not None else None
+    crop = image[y : y + height, x : x + width]
+    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY) if len(crop.shape) == 3 else crop
+    mask = (gray < 150).astype("uint8")
+    coords = cv2.findNonZero(mask)
+    if coords is None:
+        return None, 0.0
+    bx, by, bw, bh = cv2.boundingRect(coords)
+    digit = mask[by : by + bh, bx : bx + bw]
+    resized = cv2.resize(digit.astype("float32"), (16, 24), interpolation=cv2.INTER_AREA)
+    normalized = (resized > 0.3).astype("uint8")
+    best_digit, best_score = None, -1.0
+    for digit_value, template in TEMPLATES.items():
+        intersection = np.sum((normalized == 1) & (template == 1))
+        union = np.sum((normalized == 1) | (template == 1))
+        score = float(intersection / max(1, union))
+        if score > best_score:
+            best_digit, best_score = digit_value, score
+    return best_digit, best_score
 
 
-def _card_clues(image: np.ndarray, layout: Layout, count: int, horizontal: bool) -> list[Clue]:
+def _card_clues(image: np.ndarray, layout: Layout, vertical_lines: list[int], horizontal_lines: list[int], count: int, horizontal: bool) -> list[Clue]:
     """Read each clue card independently, preserving glyph spacing."""
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     result: list[Clue] = []
@@ -139,23 +158,23 @@ def _card_clues(image: np.ndarray, layout: Layout, count: int, horizontal: bool)
         if horizontal:
             top = round(layout.first_y - layout.step_y / 2 + index * layout.step_y + 8)
             bottom = round(layout.first_y + layout.step_y / 2 + index * layout.step_y - 8)
-            left, right = 10, max(1, layout.first_x - 10)
+            left, right = 10, vertical_lines[0] - 10
             order_axis = 0
         else:
             left = round(layout.first_x - layout.step_x / 2 + index * layout.step_x + 8)
             right = round(layout.first_x + layout.step_x / 2 + index * layout.step_x - 8)
-            top, bottom = max(400, round(layout.first_y - max(layout.step_y * 3.5, 240))), layout.first_y - 8
+            top, bottom = max(450, horizontal_lines[0] - 250), horizontal_lines[0] - 10
             order_axis = 1
         crop = gray[top:bottom, left:right]
         mask = (crop < 150).astype("uint8")
         _, _, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
-        glyphs: list[tuple[int, int, int, int, int]] = []
+        glyphs: list[tuple[int, int, int, int]] = []
         for x, y, width, height, area in stats[1:]:
-            if area >= 50 and height >= 20 and width >= 5:
-                glyphs.append((int(x + left), int(y + top), int(width), int(height), int(area)))
+            if area >= 30 and height >= 15 and width >= 3:
+                glyphs.append((int(x + left), int(y + top), int(width), int(height)))
         glyphs.sort(key=lambda box: box[order_axis])
         if horizontal:
-            digits = [(box[0], box[0] + box[2], _read_digit(image, box[:4], count)) for box in glyphs]
+            digits = [(box[0], box[0] + box[2], _match_digit(image, box)[0]) for box in glyphs]
             lines: list[list[tuple[int, int, int | None]]] = [digits]
         else:
             # Column clues stack vertically. Components sharing a y-line form
@@ -164,7 +183,7 @@ def _card_clues(image: np.ndarray, layout: Layout, count: int, horizontal: bool)
             for box in glyphs:
                 center_y = box[1] + box[3] / 2
                 line = next((line for line in raw_lines if abs(center_y - line[0][2]) <= box[3] * 0.45), None)
-                entry = (box[0], box[0] + box[2], int(center_y), _read_digit(image, box[:4], count))
+                entry = (box[0], box[0] + box[2], int(center_y), _match_digit(image, box)[0])
                 if line is None:
                     raw_lines.append([entry])
                 else:
@@ -199,8 +218,9 @@ def read_clues(image_path: Path, layout: Layout, rows: int, columns: int) -> tup
     image = cv2.imread(str(image_path))
     if image is None:
         raise ValueError(f"Cannot read screenshot: {image_path}")
-    rows_result = _card_clues(image, layout, rows, horizontal=True)
-    columns_result = _card_clues(image, layout, columns, horizontal=False)
+    vertical, horizontal = _line_centers(image)
+    rows_result = _card_clues(image, layout, vertical, horizontal, rows, horizontal=True)
+    columns_result = _card_clues(image, layout, vertical, horizontal, columns, horizontal=False)
     if any(value <= 0 or value > rows for line in rows_result for value in line) or any(value <= 0 or value > columns for line in columns_result for value in line):
         raise ValueError("Nonogram clue value is outside board size. No input sent.")
     if not any(rows_result) or not any(columns_result):
@@ -288,21 +308,33 @@ def solve(row_clues: list[Clue], column_clues: list[Clue]) -> list[list[int]] | 
 
 
 def apply(solution: list[list[int]], layout: Layout) -> None:
-    """Tap only filled cells. App starts each level in fill mode."""
+    """Tap filled cells in one ADB shell session."""
+    commands: list[str] = []
     for row, line in enumerate(solution):
         for column, value in enumerate(line):
             if value:
-                tap(*layout.cell_center(row, column))
-                time.sleep(0.28)
+                x, y = layout.cell_center(row, column)
+                commands.append(f"input tap {x} {y}")
+    if commands:
+        adb("shell", input_bytes=("\n".join(commands) + "\n").encode())
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Solve current Nonogram through ADB.")
     parser.add_argument("--apply", action="store_true", help="Tap solution cells. Default is dry-run.")
+    parser.add_argument("--offline", action="store_true", help="Use existing screenshot; do not call ADB.")
     parser.add_argument("--screenshot", type=Path, default=Path("nonogram-screen.png"))
     args = parser.parse_args()
-    width, height = screen_size()
-    capture(args.screenshot)
+    if args.offline:
+        if args.apply:
+            raise SystemExit("--apply cannot be used with --offline.")
+        image = cv2.imread(str(args.screenshot))
+        if image is None:
+            raise SystemExit(f"Cannot read screenshot: {args.screenshot}")
+        height, width = image.shape[:2]
+    else:
+        width, height = screen_size()
+        capture(args.screenshot)
     layout, rows, columns = read_layout(args.screenshot)
     row_clues, column_clues = read_clues(args.screenshot, layout, rows, columns)
     solution = solve(row_clues, column_clues)

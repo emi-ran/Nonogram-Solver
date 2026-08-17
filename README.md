@@ -7,11 +7,13 @@ Dynamic Android Nonogram solver. Reads current grid and clues from screenshot, s
 ```powershell
 python nonogram_solver.py
 python nonogram_solver.py --apply
+python nonogram_solver.py --offline --screenshot Hard.png
 ```
 
 - Default: capture and solve only. No taps.
 - `--apply`: tap filled cells. App must start level in square/fill mode.
 - `--screenshot path.png`: save and read specified screenshot path.
+- `--offline`: read existing screenshot without ADB. Never sends taps.
 
 ## Requirements
 

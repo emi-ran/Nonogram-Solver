@@ -17,7 +17,7 @@ class ModeContext:
     levels_completed: int = 0
     consecutive_unknowns: int = 0
     is_finished: bool = False
-    random_order: bool = False
+    pattern: str = "sequential"
     last_solved_puzzle: SolveResult | None = None
     custom_data: dict[str, Any] | None = None
 

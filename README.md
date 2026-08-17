@@ -71,10 +71,21 @@ python main.py --auto --mode lilac_roses
 python main.py --auto --mode event
 python main.py --auto --mode adventure
 
-# 🎲 Random Tapping (Hücrelere rastgele sırada basma):
-python main.py --auto --mode normal --random
+# 🎲 Tıklama & Karıştırma Modları (--random [MODE]):
+# 1. ping_pong: Bir baştan bir sondan ortaya doğru buluşan
+python main.py --auto --mode lilac --random ping_pong
+
+# 2. center_out: Merkezden dışa doğru halka/daire şeklinde yayılan
+python main.py --auto --mode lilac --random center_out
+
+# 3. reverse: Tersten (sağ alttan sol üste doğru)
+python main.py --auto --mode lilac --random reverse
+
+# 4. snake: Zigzag / yılan şeklinde (satır satır yön değiştirerek)
+python main.py --auto --mode lilac --random snake
+
+# 5. Tamamen rastgele karıştırılmış:
 python main.py --auto --mode lilac --random
-python main.py --apply --random
 ```
 
 #### 🎯 Single Level (Solve Current Board Once)

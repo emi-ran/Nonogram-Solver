@@ -137,19 +137,12 @@ class ADBController:
         self,
         solution: SolutionMatrix,
         layout: Layout,
-        random_order: bool = False,
+        pattern: str = "sequential",
     ) -> None:
-        """Tap all filled cells in a single interactive ADB shell session for maximum speed."""
-        cells: list[tuple[int, int]] = []
-        for row_idx, line in enumerate(solution):
-            for col_idx, value in enumerate(line):
-                if value:
-                    x, y = layout.cell_center(row_idx, col_idx)
-                    cells.append((x, y))
+        """Tap all filled cells in a single interactive ADB shell session using the chosen pattern."""
+        from src.nonogram.automation.patterns import order_cells
 
-        if random_order:
-            import random
-            random.shuffle(cells)
+        cells = order_cells(solution, layout, pattern=pattern)
 
         commands = [f"input tap {x} {y}" for x, y in cells]
         if commands:

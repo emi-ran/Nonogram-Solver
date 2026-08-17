@@ -166,15 +166,22 @@ class TestAutomationStateMachine(unittest.TestCase):
             [True, True, True],
         ]
         layout = Layout(width=300, height=300, first_x=100, first_y=100, step_x=50, step_y=50)
-
-        # Call with random_order=True
-        device.apply_solution(solution, layout, random_order=True)
+        # Call with pattern="random"
+        device.apply_solution(solution, layout, pattern="random")
 
         self.assertTrue(device.run_cmd.called)
         call_args = device.run_cmd.call_args
         payload = call_args.kwargs.get("input_bytes", b"").decode()
         tap_lines = [line for line in payload.strip().splitlines() if line.startswith("input tap")]
         self.assertEqual(len(tap_lines), 6)  # 6 True values in solution
+
+        # Call with pattern="ping_pong"
+        device.apply_solution(solution, layout, pattern="ping_pong")
+        call_args2 = device.run_cmd.call_args
+        payload2 = call_args2.kwargs.get("input_bytes", b"").decode()
+        lines2 = [line for line in payload2.strip().splitlines() if line.startswith("input tap")]
+        self.assertEqual(lines2[0], f"input tap {layout.cell_center(0, 0)[0]} {layout.cell_center(0, 0)[1]}")
+        self.assertEqual(lines2[1], f"input tap {layout.cell_center(2, 2)[0]} {layout.cell_center(2, 2)[1]}")
 
 
 if __name__ == "__main__":

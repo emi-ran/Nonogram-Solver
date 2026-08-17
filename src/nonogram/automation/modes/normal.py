@@ -31,8 +31,8 @@ class NormalGameMode(BaseGameMode):
                 print("[NormalMode] Board could not be solved. Retrying...")
                 return False
 
-            print(f"[NormalMode] Solution found ({result.filled_count} filled cells). Tapping...")
-            device.apply_solution(result.solution, result.puzzle.layout, random_order=context.random_order)
+            print(f"[NormalMode] Solution found ({result.filled_count} filled cells). Tapping ({context.pattern})...")
+            device.apply_solution(result.solution, result.puzzle.layout, pattern=context.pattern)
             context.last_solved_puzzle = result
             context.levels_completed += 1
             context.consecutive_unknowns = 0

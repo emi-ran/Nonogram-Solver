@@ -86,8 +86,12 @@ Examples:
     gameplay_group = parser.add_argument_group("Gameplay Options")
     gameplay_group.add_argument(
         "--random",
-        action="store_true",
-        help="Tap solved cells in randomized order instead of sequential row-by-row.",
+        nargs="?",
+        const="random",
+        default="sequential",
+        choices=["random", "ping_pong", "center_out", "reverse", "snake"],
+        metavar="MODE",
+        help="Solve tapping mode: 'random' (pure shuffle), 'ping_pong' (two-way converge), 'center_out' (circle/radial), 'reverse' (bottom-up), 'snake' (zigzag). Default without flag: sequential.",
     )
 
     # Device Options
@@ -106,6 +110,8 @@ Examples:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+
+    pattern = args.random
 
     # 1. Capture-only mode: Take screenshot and exit immediately when neither --auto nor --apply is used
     if args.screenshot is not None and not args.auto and not args.apply and args.offline is None:
@@ -130,7 +136,7 @@ def main() -> None:
             mode=args.mode,
             max_levels=args.max_levels,
             poll_interval=args.poll_interval,
-            random_order=args.random,
+            pattern=pattern,
             save_screenshots=save_screenshots,
             screenshot_path=screenshot_path,
         )
@@ -159,7 +165,7 @@ def main() -> None:
             device=device,
             apply_taps=args.apply,
             offline=is_offline,
-            random_order=args.random,
+            pattern=pattern,
             save_screenshot=save_screenshots,
         )
     except Exception as e:

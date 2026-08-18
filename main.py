@@ -89,9 +89,23 @@ Examples:
         nargs="?",
         const="random",
         default="sequential",
-        choices=["random", "ping_pong", "center_out", "reverse", "snake"],
+        choices=[
+            "random",
+            "shuffle",
+            "bfs",
+            "dfs",
+            "spiral",
+            "diagonal",
+            "checkerboard",
+            "corners_in",
+            "gravity",
+            "ping_pong",
+            "center_out",
+            "reverse",
+            "snake",
+        ],
         metavar="MODE",
-        help="Solve tapping mode: 'random' (pure shuffle), 'ping_pong' (two-way converge), 'center_out' (circle/radial), 'reverse' (bottom-up), 'snake' (zigzag). Default without flag: sequential.",
+        help="Solve tapping mode: 'random' (auto-selects a random fun pattern per solve), 'shuffle' (pure random shuffle), 'bfs' (flood-fill ripple), 'dfs' (ant crawler), 'spiral' (inward swirl), 'diagonal' (45-deg slash wave), 'checkerboard' (mosaic), 'corners_in' (4-way convergence), 'gravity' (bottom-up stacking), 'ping_pong', 'center_out', 'reverse', 'snake'. Default without flag: sequential.",
     )
 
     # Device Options

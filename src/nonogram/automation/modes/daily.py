@@ -5,16 +5,17 @@ import time
 import numpy as np
 
 from src.nonogram.automation.modes.base import BaseGameMode, ModeContext
+from src.nonogram.automation.patterns import resolve_pattern
 from src.nonogram.automation.runner import solve_from_image
 from src.nonogram.automation.states import GameState, StateDetectionResult
 from src.nonogram.device.adb import ADBController
 
 
 class DailyChallengeMode(BaseGameMode):
-    """Handles continuous Daily Challenge puzzles."""
+    """Handles Nonogram Daily Challenge calendar automation."""
 
     name: str = "daily"
-    description: str = "Daily Challenge Mode"
+    description: str = "Daily Challenges Mode"
 
     def handle_state(
         self,
@@ -31,8 +32,12 @@ class DailyChallengeMode(BaseGameMode):
                 print("[DailyMode] Board could not be solved. Retrying...")
                 return False
 
-            print(f"[DailyMode] Solution found ({result.filled_count} filled cells). Tapping ({context.pattern})...")
-            device.apply_solution(result.solution, result.puzzle.layout, pattern=context.pattern)
+            concrete_pat = resolve_pattern(context.pattern)
+            pat_str = concrete_pat.value if hasattr(concrete_pat, "value") else str(concrete_pat)
+            pattern_desc = f"random: {pat_str}" if context.pattern.lower().strip() in ("random", "rand") else pat_str
+
+            print(f"[DailyMode] Solution found ({result.filled_count} filled cells). Tapping ({pattern_desc})...")
+            device.apply_solution(result.solution, result.puzzle.layout, pattern=concrete_pat)
             context.last_solved_puzzle = result
             context.levels_completed += 1
             context.consecutive_unknowns = 0

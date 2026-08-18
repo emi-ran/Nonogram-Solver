@@ -138,13 +138,18 @@ class ADBController:
         solution: SolutionMatrix,
         layout: Layout,
         pattern: str = "sequential",
-    ) -> None:
+    ) -> str:
         """Tap all filled cells in a single interactive ADB shell session using the chosen pattern."""
-        from src.nonogram.automation.patterns import order_cells
+        from src.nonogram.automation.patterns import order_cells, resolve_pattern
 
-        cells = order_cells(solution, layout, pattern=pattern)
+        concrete_pattern = resolve_pattern(pattern)
+        cells = order_cells(solution, layout, pattern=concrete_pattern)
 
         commands = [f"input tap {x} {y}" for x, y in cells]
         if commands:
             payload = ("\n".join(commands) + "\n").encode()
             self.run_cmd("shell", input_bytes=payload)
+
+        pat_val = concrete_pattern.value if hasattr(concrete_pattern, "value") else str(concrete_pattern)
+        return str(pat_val)
+

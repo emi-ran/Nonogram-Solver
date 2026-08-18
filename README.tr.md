@@ -81,25 +81,43 @@ python main.py --auto --mode event
 
 ---
 
-### 2. Tıklama Desenleri (`--random [MODE]`)
+### 2. Tıklama Desenleri & Görsel Efektler (`--random [MODE]`)
 
 Çözülen karelerin ekrana hangi sırayla basılacağını belirleyebilirsiniz:
 
 ```powershell
-# İki uçtan merkeze doğru buluşarak:
-python main.py --auto --mode lilac --random ping_pong
-
-# Merkezden dışa doğru halkalar halinde yayılarak:
-python main.py --auto --mode lilac --random center_out
-
-# Tersten (sağ alttan sol üste):
-python main.py --auto --mode lilac --random reverse
-
-# Zigzag / Yılan şeklinde:
-python main.py --auto --mode lilac --random snake
-
-# Tamamen rastgele karıştırarak:
+# 🎲 Rastgele Seçici (Her bölümde sürpriz farklı bir desen seçer):
 python main.py --auto --mode lilac --random
+
+# 🌊 BFS (Genişlemesine Arama / Su Dalgası / Flood Fill):
+python main.py --auto --mode lilac --random bfs
+
+# 🐜 DFS (Derinlemesine Arama / Karınca / Labirent Çizgisi):
+python main.py --auto --mode lilac --random dfs
+
+# 🌀 Spiral (Dış çeperden merkeze helezonik girdap):
+python main.py --auto --mode lilac --random spiral
+
+# 📐 Diagonal (45 derecelik çapraz dalga / silecek efekti):
+python main.py --auto --mode lilac --random diagonal
+
+# 🏁 Checkerboard (Satranç / Önce açık renk kareler, sonra koyu kareler):
+python main.py --auto --mode lilac --random checkerboard
+
+# 🎯 Corners In (4 köşeden merkeze doğru eşzamanlı kıskaç):
+python main.py --auto --mode lilac --random corners_in
+
+# ⏳ Gravity (Alttan üste kum yığılma / Tetris yerçekimi):
+python main.py --auto --mode lilac --random gravity
+
+# 🔀 Shuffle (Klasik tamamen rastgele karıştırma):
+python main.py --auto --mode lilac --random shuffle
+
+# 🏓 Ping Pong, Merkezden Dışa, Ters ve Yılan:
+python main.py --auto --mode lilac --random ping_pong
+python main.py --auto --mode lilac --random center_out
+python main.py --auto --mode lilac --random reverse
+python main.py --auto --mode lilac --random snake
 ```
 
 ---

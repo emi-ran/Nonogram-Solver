@@ -86,21 +86,39 @@ python main.py --auto --mode lilac_roses
 python main.py --auto --mode event
 python main.py --auto --mode adventure
 
-# 🎲 Tapping & Shuffle Modes (--random [MODE]):
-# 1. ping_pong: Alternating from top-left and bottom-right, converging in the center
-python main.py --auto --mode lilac --random ping_pong
-
-# 2. center_out: Starting from the center and expanding outward in rings
-python main.py --auto --mode lilac --random center_out
-
-# 3. reverse: Bottom-right to top-left inverted tapping
-python main.py --auto --mode lilac --random reverse
-
-# 4. snake: Zigzag row-by-row alternating direction
-python main.py --auto --mode lilac --random snake
-
-# 5. Pure Random: Uniformly shuffled permutation
+# 🎲 Tapping Patterns & Visual Modes (--random [MODE]):
+# 1. Random Selector (Picks a random fun pattern per level):
 python main.py --auto --mode lilac --random
+
+# 2. bfs (Breadth-First Flood Fill / Ripple spread):
+python main.py --auto --mode lilac --random bfs
+
+# 3. dfs (Depth-First Ant Crawler / Labyrinth trace):
+python main.py --auto --mode lilac --random dfs
+
+# 4. spiral (Clockwise inward swirl):
+python main.py --auto --mode lilac --random spiral
+
+# 5. diagonal (45-degree slash wave):
+python main.py --auto --mode lilac --random diagonal
+
+# 6. checkerboard (Light tiles first, then dark tiles):
+python main.py --auto --mode lilac --random checkerboard
+
+# 7. corners_in (4-way corner convergence toward center):
+python main.py --auto --mode lilac --random corners_in
+
+# 8. gravity (Tetris / sand stacking from bottom to top):
+python main.py --auto --mode lilac --random gravity
+
+# 9. shuffle (Pure uniform random shuffle):
+python main.py --auto --mode lilac --random shuffle
+
+# 10. ping_pong, center_out, reverse, snake:
+python main.py --auto --mode lilac --random ping_pong
+python main.py --auto --mode lilac --random center_out
+python main.py --auto --mode lilac --random reverse
+python main.py --auto --mode lilac --random snake
 ```
 
 #### 🎯 Single Level (Solve Current Board Once)

@@ -6,6 +6,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from src.nonogram.automation.patterns import resolve_pattern
 from src.nonogram.config import DEFAULT_SCREENSHOT_PATH
 from src.nonogram.device.adb import ADBController
 from src.nonogram.solver.engine import solve
@@ -95,10 +96,14 @@ def run_pipeline(
         if device is None:
             device = ADBController()
         if result.puzzle.layout and result.solution:
+            concrete_pat = resolve_pattern(pattern)
+            pat_str = concrete_pat.value if hasattr(concrete_pat, "value") else str(concrete_pat)
+            pattern_desc = f"random: {pat_str}" if str(pattern).lower().strip() in ("random", "rand") else pat_str
+            print(f"Applying solution taps ({pattern_desc})...")
             device.apply_solution(
                 result.solution,
                 result.puzzle.layout,
-                pattern=pattern,
+                pattern=concrete_pat,
             )
 
     return result

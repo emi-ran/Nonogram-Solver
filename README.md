@@ -15,6 +15,10 @@
 
 A fast, dynamic, end-to-end **Android Nonogram Solver and Autonomous Player** powered by Computer Vision (OpenCV), Constraint Propagation, and ADB automation. Supports continuous infinite play, Daily Challenges, Special Events (Lilac Roses), and customizable interactive tapping patterns.
 
+> **Research and testing notice:** This independent project is for computer-vision, constraint-solving, and Android automation experiments on devices and accounts you control. It is not affiliated with or endorsed by Easybrain or Nonogram.com, and is not intended to bypass platform safeguards, gain unfair advantages, or enable abusive use. Please comply with the game's Terms of Service and applicable rules.
+>
+> Target app: [Nonogram.com – Picture Cross](https://play.google.com/store/apps/details?id=com.easybrain.nonogram)
+
 ## Project Structure
 
 ```text

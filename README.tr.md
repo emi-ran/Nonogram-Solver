@@ -15,6 +15,10 @@
 
 Android cihazlarda çalışan popüler **Nonogram.com** oyunları için geliştirilmiş; bilgisayarlı görü (Computer Vision), hızlı kısıt yayılımı (Constraint Propagation) ve ADB otomasyonunu birleştiren **yüksek performanslı dinamik çözücü ve otonom oynatıcı**.
 
+> **Araştırma ve test notu:** Bu bağımsız proje, yalnızca size ait cihaz ve hesaplarda bilgisayarlı görü, kısıt çözümü ve Android otomasyonu deneyleri için hazırlanmıştır. Easybrain veya Nonogram.com ile bağlantılı ya da onlar tarafından onaylanmış değildir; platform önlemlerini aşmak, haksız avantaj sağlamak veya kötüye kullanımı mümkün kılmak amacı taşımaz. Lütfen oyunun Kullanım Koşullarına ve geçerli kurallara uyun.
+>
+> Hedef uygulama: [Nonogram.com – Picture Cross](https://play.google.com/store/apps/details?id=com.easybrain.nonogram)
+
 ---
 
 ## 🌟 Öne Çıkan Özellikler
